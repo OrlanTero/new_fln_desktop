@@ -48,7 +48,51 @@ async function testConnection() {
   }
 }
 
+// Function to run SQL script
+async function runSqlScript(scriptPath) {
+  try {
+    // Read the SQL script file
+    const script = fs.readFileSync(scriptPath, 'utf8');
+    
+    // Split the script into individual statements
+    const statements = script.split(';').filter(stmt => stmt.trim() !== '');
+    
+    // Execute each statement
+    for (const statement of statements) {
+      if (statement.trim()) {
+        // Skip the USE statement as we're already connected to the database
+        if (!statement.trim().toUpperCase().startsWith('USE')) {
+          await pool.query(statement);
+        }
+      }
+    }
+    
+    console.log(`SQL script ${path.basename(scriptPath)} executed successfully`);
+  } catch (err) {
+    console.error(`Error executing SQL script ${path.basename(scriptPath)}:`, err);
+  }
+}
+
 // Run the test
 testConnection();
+
+// Run the document tables script
+const documentsTablesScript = path.join(__dirname, 'documents_tables.sql');
+if (fs.existsSync(documentsTablesScript)) {
+  runSqlScript(documentsTablesScript);
+}
+
+// Run the email tables script
+const emailTablesScript = path.join(__dirname, 'email_tables.sql');
+if (fs.existsSync(emailTablesScript)) {
+  runSqlScript(emailTablesScript);
+}
+
+// Run the update documents table script
+const updateDocumentsTablesScript = path.join(__dirname, 'update_documents_table.sql');
+if (fs.existsSync(updateDocumentsTablesScript)) {
+  console.log('Executing update_documents_table.sql script...');
+  runSqlScript(updateDocumentsTablesScript);
+}
 
 module.exports = pool; 

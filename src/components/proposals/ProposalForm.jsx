@@ -91,6 +91,8 @@ const ProposalForm = ({ proposal, clients, services, onSave, onCancel }) => {
           proposal_name: values.proposal_title,
           project_name: values.proposal_title,
           created_by: user?.user_id || null,
+          // Include the services in the proposal data
+          services: proposalServices
         };
         
         // Call the onSave function passed from parent
@@ -294,6 +296,33 @@ const ProposalForm = ({ proposal, clients, services, onSave, onCancel }) => {
     if (selectedService) {
       serviceFormik.setFieldValue('service_id', serviceId);
       serviceFormik.setFieldValue('unit_price', selectedService.price || 0);
+    }
+  };
+  
+  // Add a new handler for the Save as Draft button
+  const handleSaveAsDraft = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Get current form values without validation
+      const draftData = {
+        ...formik.values,
+        status: 'Draft'
+      };
+      
+      // Add any existing proposal services if available
+      if (proposalServices.length > 0) {
+        draftData.services = proposalServices;
+      }
+      
+      // Call the onSave function with the draft data
+      await onSave(draftData);
+    } catch (err) {
+      console.error('Error saving draft:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -505,23 +534,33 @@ const ProposalForm = ({ proposal, clients, services, onSave, onCancel }) => {
         </Grid>
         
         {/* Form Actions */}
-        <Grid item xs={12} sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+        <Grid item xs={12} sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
           <Button
             variant="outlined"
             color="secondary"
-            onClick={onCancel}
-            sx={{ mr: 1 }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
+            onClick={handleSaveAsDraft}
             disabled={loading}
           >
-            {loading ? <CircularProgress size={24} /> : 'Save Proposal'}
+            Save as Draft
           </Button>
+          <Box>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={onCancel}
+              sx={{ mr: 1 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={24} /> : 'Save and Continue'}
+            </Button>
+          </Box>
         </Grid>
       </Grid>
       

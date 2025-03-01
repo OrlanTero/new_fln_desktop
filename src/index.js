@@ -6,6 +6,10 @@ const clientService = require('./services/clientService');
 const serviceService = require('./services/serviceService');
 const proposalService = require('./services/proposalService');
 const projectService = require('./services/projectService');
+const documentService = require('./services/documentService');
+const emailService = require('./services/emailService');
+const attachmentService = require('./services/attachmentService');
+const companyService = require('./services/companyService');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -611,9 +615,6 @@ app.on('ready', () => {
     }
   });
 
-  // Now create the window
-  createWindow();
-  
   // Register other IPC handlers
   ipcMain.handle('getClientTypes', async () => {
     console.log('getClientTypes handler called');
@@ -728,4 +729,180 @@ app.on('ready', () => {
       return { success: false, error: error.message };
     }
   });
+
+  // Document API handlers
+  ipcMain.handle('generateProposalDocument', async (event, documentData) => {
+    console.log('generateProposalDocument handler called with data:', documentData);
+    try {
+      const result = await documentService.generateProposalDocument(documentData);
+      console.log('Generated document:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in generateProposalDocument handler:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Get document by ID
+  ipcMain.handle('getDocumentById', async (event, id) => {
+    console.log(`getDocumentById handler called for id ${id}`);
+    try {
+      const result = await documentService.getDocumentById(id);
+      console.log('Document result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in getDocumentById handler:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Get documents by proposal ID
+  ipcMain.handle('getDocumentsByProposalId', async (event, proposalId) => {
+    console.log(`getDocumentsByProposalId handler called for proposal id ${proposalId}`);
+    try {
+      const result = await documentService.getDocumentsByProposalId(proposalId);
+      console.log('Documents result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in getDocumentsByProposalId handler:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Get document content
+  ipcMain.handle('getDocumentContent', async (event, id) => {
+    console.log(`getDocumentContent handler called for id ${id}`);
+    try {
+      const result = await documentService.getDocumentContent(id);
+      console.log('Document content result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in getDocumentContent handler:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Delete document
+  ipcMain.handle('deleteDocument', async (event, id) => {
+    console.log(`deleteDocument handler called for id ${id}`);
+    try {
+      const result = await documentService.deleteDocument(id);
+      console.log('Delete document result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in deleteDocument handler:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Email API handlers
+  ipcMain.handle('sendProposalEmail', async (event, emailData) => {
+    console.log('sendProposalEmail handler called with data:', emailData);
+    try {
+      const result = await emailService.sendProposalEmail(emailData);
+      console.log('Send email result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in sendProposalEmail handler:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Get emails by proposal ID
+  ipcMain.handle('getEmailsByProposalId', async (event, proposalId) => {
+    console.log(`getEmailsByProposalId handler called for proposal id ${proposalId}`);
+    try {
+      const result = await emailService.getEmailsByProposalId(proposalId);
+      console.log('Emails result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in getEmailsByProposalId handler:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Attachment API handlers
+  ipcMain.handle('uploadAttachment', async (event, filePath) => {
+    console.log(`uploadAttachment handler called for file ${filePath}`);
+    try {
+      const result = await attachmentService.uploadAttachment(filePath);
+      console.log('Upload attachment result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in uploadAttachment handler:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Get attachment by ID
+  ipcMain.handle('getAttachmentById', async (event, id) => {
+    console.log(`getAttachmentById handler called for id ${id}`);
+    try {
+      const result = await attachmentService.getAttachmentById(id);
+      console.log('Attachment result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in getAttachmentById handler:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Delete attachment
+  ipcMain.handle('deleteAttachment', async (event, id) => {
+    console.log(`deleteAttachment handler called for id ${id}`);
+    try {
+      const result = await attachmentService.deleteAttachment(id);
+      console.log('Delete attachment result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in deleteAttachment handler:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Company API handlers
+  ipcMain.handle('getCompanyInfo', async (event) => {
+    console.log('getCompanyInfo handler called');
+    try {
+      const result = await companyService.getCompanyInfo();
+      console.log('Company info result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in getCompanyInfo handler:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Update company info
+  ipcMain.handle('updateCompanyInfo', async (event, data) => {
+    console.log('updateCompanyInfo handler called with data:', data);
+    try {
+      const result = await companyService.updateCompanyInfo(data);
+      console.log('Update company info result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in updateCompanyInfo handler:', error);
+      return { success: false, error: error.message };
+    }
+  });
+  
+  // Create the window after registering all handlers
+  createWindow();
+});
+
+// Quit when all windows are closed, except on macOS. There, it's common
+// for applications and their menu bar to stay active until the user quits
+// explicitly with Cmd + Q.
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('activate', () => {
+  // On OS X it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
 });

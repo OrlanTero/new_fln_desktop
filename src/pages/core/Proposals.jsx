@@ -38,11 +38,12 @@ import {
   Assignment as AssignmentIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
-  Engineering as EngineeringIcon
+  Engineering as EngineeringIcon,
+  Email as EmailIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import ProposalForm from '../../components/proposals/ProposalForm';
+import ProposalWizard from '../../components/proposals/ProposalWizard';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
 const Proposals = () => {
@@ -170,14 +171,34 @@ const Proposals = () => {
     try {
       let result;
       
+      // Ensure the proposal status is set to 'Draft' if not specified
+      const dataToSave = {
+        ...proposalData,
+        status: proposalData.status || 'Draft'
+      };
+      
+      // Extract services from the proposal data if present
+      const services = proposalData.services || [];
+      
       if (currentProposal) {
         // Update existing proposal
         result = await window.api.updateProposal(
           currentProposal.proposal_id, 
-          proposalData
+          dataToSave
         );
         
         if (result.success) {
+          // If there are services to save, save them
+          if (services.length > 0) {
+            // First remove all existing services
+            await window.api.removeAllProposalServices(currentProposal.proposal_id);
+            
+            // Then add the new services
+            for (const service of services) {
+              await window.api.addProposalService(currentProposal.proposal_id, service);
+            }
+          }
+          
           setProposals(proposals.map(p => 
             p.proposal_id === currentProposal.proposal_id ? result.proposal : p
           ));
@@ -191,9 +212,16 @@ const Proposals = () => {
         }
       } else {
         // Create new proposal
-        result = await window.api.createProposal(proposalData);
+        result = await window.api.createProposal(dataToSave);
         
         if (result.success) {
+          // If there are services to save, save them
+          if (services.length > 0) {
+            for (const service of services) {
+              await window.api.addProposalService(result.proposal.proposal_id, service);
+            }
+          }
+          
           setProposals([...proposals, result.proposal]);
           setSnackbar({
             open: true,
@@ -205,8 +233,7 @@ const Proposals = () => {
         }
       }
       
-      setOpenForm(false);
-      setCurrentProposal(null);
+      return result;
     } catch (err) {
       console.error('Error saving proposal:', err);
       setSnackbar({
@@ -214,6 +241,36 @@ const Proposals = () => {
         message: `Error: ${err.message}`,
         severity: 'error'
       });
+      throw err;
+    }
+  };
+  
+  const handleSendProposal = async (emailData) => {
+    try {
+      const result = await window.api.sendProposalEmail(emailData);
+      
+      if (result.success) {
+        // Update proposal status to 'Sent'
+        await handleUpdateStatus(emailData.proposal.proposal_id, 'Sent');
+        
+        setSnackbar({
+          open: true,
+          message: 'Proposal sent successfully',
+          severity: 'success'
+        });
+        
+        return result;
+      } else {
+        throw new Error(result.error || 'Failed to send proposal email');
+      }
+    } catch (err) {
+      console.error('Error sending proposal email:', err);
+      setSnackbar({
+        open: true,
+        message: `Error: ${err.message}`,
+        severity: 'error'
+      });
+      throw err;
     }
   };
   
@@ -308,9 +365,9 @@ const Proposals = () => {
   const filteredProposals = proposals.filter(proposal => {
     const searchLower = searchTerm.toLowerCase();
     return (
-      proposal.proposal_title.toLowerCase().includes(searchLower) ||
+      proposal.proposal_name?.toLowerCase().includes(searchLower) ||
       proposal.client_name?.toLowerCase().includes(searchLower) ||
-      proposal.status.toLowerCase().includes(searchLower)
+      proposal.status?.toLowerCase().includes(searchLower)
     );
   });
   
@@ -396,7 +453,7 @@ const Proposals = () => {
               ) : (
                 filteredProposals.map((proposal) => (
                   <TableRow key={proposal.proposal_id}>
-                    <TableCell>{proposal.proposal_title}</TableCell>
+                    <TableCell>{proposal.proposal_name}</TableCell>
                     <TableCell>{proposal.client_name}</TableCell>
                     <TableCell>{formatDate(proposal.created_at)}</TableCell>
                     <TableCell>{formatDate(proposal.valid_until)}</TableCell>
@@ -429,17 +486,15 @@ const Proposals = () => {
         open={openForm} 
         onClose={() => setOpenForm(false)}
         fullWidth
-        maxWidth="md"
+        maxWidth="lg"
       >
-        <DialogTitle>
-          {currentProposal ? 'Edit Proposal' : 'New Proposal'}
-        </DialogTitle>
         <DialogContent>
-          <ProposalForm
+          <ProposalWizard
             proposal={currentProposal}
             clients={clients}
             services={services}
             onSave={handleSaveProposal}
+            onSend={handleSendProposal}
             onCancel={() => setOpenForm(false)}
           />
         </DialogContent>
@@ -453,7 +508,7 @@ const Proposals = () => {
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete the proposal "{currentProposal?.proposal_title}"? This action cannot be undone.
+            Are you sure you want to delete the proposal "{currentProposal?.proposal_name}"? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -518,6 +573,19 @@ const Proposals = () => {
             <EngineeringIcon fontSize="small" color="primary" />
           </ListItemIcon>
           <ListItemText>Create Project</ListItemText>
+        </MenuItem>
+        
+        {/* Add Send Proposal option to menu */}
+        <MenuItem onClick={() => {
+          const proposal = proposals.find(p => p.proposal_id === selectedProposalId);
+          setCurrentProposal(proposal);
+          setOpenForm(true);
+          handleCloseMenu();
+        }}>
+          <ListItemIcon>
+            <EmailIcon fontSize="small" color="primary" />
+          </ListItemIcon>
+          <ListItemText>Send Proposal</ListItemText>
         </MenuItem>
         
         <MenuItem onClick={() => {

@@ -91,6 +91,26 @@ contextBridge.exposeInMainWorld('api', {
     calculateProjectTotal: (projectId) => ipcRenderer.invoke('calculateProjectTotal', projectId),
     calculateProjectProgress: (projectId) => ipcRenderer.invoke('calculateProjectProgress', projectId),
     
+    // Document API
+    generateProposalDocument: (documentData) => ipcRenderer.invoke('generateProposalDocument', documentData),
+    getDocumentById: (id) => ipcRenderer.invoke('getDocumentById', id),
+    getDocumentsByProposalId: (proposalId) => ipcRenderer.invoke('getDocumentsByProposalId', proposalId),
+    getDocumentContent: (id) => ipcRenderer.invoke('getDocumentContent', id),
+    deleteDocument: (id) => ipcRenderer.invoke('deleteDocument', id),
+    
+    // Email API
+    sendProposalEmail: (emailData) => ipcRenderer.invoke('sendProposalEmail', emailData),
+    getEmailsByProposalId: (proposalId) => ipcRenderer.invoke('getEmailsByProposalId', proposalId),
+    
+    // Attachment API
+    uploadAttachment: (filePath) => ipcRenderer.invoke('uploadAttachment', filePath),
+    getAttachmentById: (id) => ipcRenderer.invoke('getAttachmentById', id),
+    deleteAttachment: (id) => ipcRenderer.invoke('deleteAttachment', id),
+    
+    // Company API
+    getCompanyInfo: () => ipcRenderer.invoke('getCompanyInfo'),
+    updateCompanyInfo: (data) => ipcRenderer.invoke('updateCompanyInfo', data),
+    
     // Database API
     getDatabaseStatus: () => ipcRenderer.invoke('db:status'),
 });

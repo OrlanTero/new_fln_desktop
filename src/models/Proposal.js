@@ -229,15 +229,16 @@ class Proposal {
     try {
       const query = `
         INSERT INTO proposal_services 
-        (proposal_id, service_id, quantity, price) 
-        VALUES (?, ?, ?, ?)
+        (proposal_id, service_id, quantity, price, discount_percentage) 
+        VALUES (?, ?, ?, ?, ?)
       `;
       
       const values = [
         proposalId,
         serviceData.service_id,
         serviceData.quantity || 1,
-        serviceData.price
+        serviceData.unit_price || serviceData.price || 0,
+        serviceData.discount_percentage || 0
       ];
       
       const [result] = await db.query(query, values);
@@ -259,13 +260,14 @@ class Proposal {
     try {
       const query = `
         UPDATE proposal_services 
-        SET quantity = ?, price = ?
+        SET quantity = ?, price = ?, discount_percentage = ?
         WHERE proposal_service_id = ?
       `;
       
       const values = [
         serviceData.quantity,
-        serviceData.price,
+        serviceData.unit_price || serviceData.price || 0,
+        serviceData.discount_percentage || 0,
         proposalServiceId
       ];
       
