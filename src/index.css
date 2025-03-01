@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Remove any conflicting styles */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+@keyframes scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-loading {
+  animation: loading 2s ease-in-out infinite;
+}
+
+.animate-scale {
+  animation: scale 2s infinite;
+}
