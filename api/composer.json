@@ -1,0 +1,14 @@
+{
+    "name": "electron-app/php-api",
+    "description": "PHP API backend for Electron application",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "klein/klein": "^2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "./"
+        }
+    }
+} 
